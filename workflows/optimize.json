@@ -1,0 +1,291 @@
+{
+  "name": "Optimize Campaigns",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "feb071ec-e104-4330-93fe-66226a2573ea",
+      "name": "Cron",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [
+        -608,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "return items.map(item => {\n  const m = item.json;\n  let action = null;\n  if(m.cpl && m.cpl > 50 && m.conversions >= 5) action = 'pause';\n  else if(m.roas && m.roas < 1.2 && m.spend > 100) action = 'reduce_budget';\n  return {json:{...m,action}};\n});"
+      },
+      "id": "a4ce930a-2ed2-418e-bb28-8c66b3efec46",
+      "name": "Function Apply Rules",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        -64,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{$json[\"action\"]}}",
+              "value2": "pause"
+            }
+          ]
+        }
+      },
+      "id": "fa170e85-99bf-44e1-8dfa-889b69000b68",
+      "name": "If Pause",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        208,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{$json[\"action\"]}}",
+              "value2": "reduce_budget"
+            }
+          ]
+        }
+      },
+      "id": "8f3264a0-d8f6-4206-b185-f1bbf791c167",
+      "name": "If Budget",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        208,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://mockapi.io/projects/apply-action",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "options": {}
+      },
+      "id": "ec058c60-0fd3-4943-a9c2-01c095fdaa2f",
+      "name": "HTTP Apply Action",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        432,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "channel": "#alerts",
+        "text": "Action: {{$json[\"action\"]}} on campaign {{$json[\"campaign_name\"]}} (CPL: {{$json[\"cpl\"]}}, ROAS: {{$json[\"roas\"]}})",
+        "otherOptions": {},
+        "attachments": []
+      },
+      "id": "5f62acdc-3cc5-4f1a-ada7-0cb8a40d2d58",
+      "name": "Slack Alert",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 1,
+      "position": [
+        608,
+        112
+      ],
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "hihx7SoqeuxSIdfo",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "tableId": "campaign_metrics",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "date"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -320,
+        112
+      ],
+      "id": "16390da3-f0f4-4254-b50b-d3f5f5a7a830",
+      "name": "Get Campaign Metrics",
+      "credentials": {
+        "supabaseApi": {
+          "id": "xDQEMmNQjoL2zOJA",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "tableId": "campaign_actions"
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        816,
+        112
+      ],
+      "id": "b493028e-a3cd-4bfb-9bb2-def743f37bd9",
+      "name": "Create a row",
+      "credentials": {
+        "supabaseApi": {
+          "id": "xDQEMmNQjoL2zOJA",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        432,
+        -48
+      ],
+      "id": "7617ee2c-727f-4699-ad9d-4257c3af395e",
+      "name": "No Operation, do nothing"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        448,
+        304
+      ],
+      "id": "3832379f-c341-4124-bd3e-20ff52c438a2",
+      "name": "Do Nothing"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Cron": {
+      "main": [
+        [
+          {
+            "node": "Get Campaign Metrics",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Function Apply Rules": {
+      "main": [
+        [
+          {
+            "node": "If Pause",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "If Budget",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Pause": {
+      "main": [
+        [
+          {
+            "node": "HTTP Apply Action",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Budget": {
+      "main": [
+        [
+          {
+            "node": "HTTP Apply Action",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Do Nothing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Apply Action": {
+      "main": [
+        [
+          {
+            "node": "Slack Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Campaign Metrics": {
+      "main": [
+        [
+          {
+            "node": "Function Apply Rules",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Slack Alert": {
+      "main": [
+        [
+          {
+            "node": "Create a row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "b274dab1-718e-4d9a-ae44-db6118ee23ae",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ad844684cdc2200b63562c0ef41f6d61ef718721145a8d666b316194de93c58f"
+  },
+  "id": "KHJchHLKZs5skeyr",
+  "tags": []
+}

@@ -1,0 +1,409 @@
+{
+  "name": "Moderation Agent",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "8861ab59-c942-4ed5-b453-10cf7e7d85d8",
+      "name": "Cron",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [
+        -800,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://mockapi.io/projects/social-comments",
+        "options": {}
+      },
+      "id": "652503e2-676a-44f0-91b6-2a2239196677",
+      "name": "HTTP Request Comments",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        -608,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "return items.map(item=>{\n const d=item.json;\n return {json:{platform:d.platform||'fb',object_id:d.id,user:d.user,text:d.text,permalink:d.permalink,created_time:d.created_time}};\n});"
+      },
+      "id": "acc4a6ed-3bf6-4199-aa4f-6e4ae225884d",
+      "name": "Function Extract",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        -400,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{$json[\"intent\"]}}",
+              "value2": "spam"
+            }
+          ]
+        }
+      },
+      "id": "8d8d3cac-954d-467b-9151-341d8b30d605",
+      "name": "If Spam",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        32,
+        -16
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{$json[\"intent\"]}}",
+              "value2": "complaint"
+            },
+            {
+              "value1": "={{$json[\"intent\"]}}",
+              "value2": "question"
+            }
+          ]
+        }
+      },
+      "id": "49362fac-f087-4cf8-9a23-db4f413dca38",
+      "name": "If Escalate",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        32,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "channel": "#moderation",
+        "text": "Escalated {{$json[\"intent\"]}}: {{$json[\"text\"]}} ({{$json[\"permalink\"]}})",
+        "otherOptions": {},
+        "attachments": []
+      },
+      "id": "87348501-31a2-40d5-8ebd-cbd5a7d5d40e",
+      "name": "Slack Escalate",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 1,
+      "position": [
+        336,
+        112
+      ],
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "hihx7SoqeuxSIdfo",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "database",
+        "operation": "getAll"
+      },
+      "id": "52406b0b-0494-4962-9a1f-ad4686308562",
+      "name": "Notion Write",
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2,
+      "position": [
+        528,
+        112
+      ],
+      "credentials": {
+        "notionApi": {
+          "id": "27I8oJZkjrOmJf6F",
+          "name": "Notion account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "database",
+        "operation": "getAll"
+      },
+      "id": "fb1b7ff6-bb08-4daa-80c2-1a605cc551aa",
+      "name": "Notion Poll Approvals",
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2,
+      "position": [
+        768,
+        96
+      ],
+      "credentials": {
+        "notionApi": {
+          "id": "27I8oJZkjrOmJf6F",
+          "name": "Notion account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{$json[\"status\"]}}",
+              "value2": "Approved"
+            }
+          ]
+        }
+      },
+      "id": "c05aa1e3-020e-4667-a259-7926dfe06d20",
+      "name": "If Approved",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        960,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://mockapi.io/projects/post-reply",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "options": {}
+      },
+      "id": "3217a6fc-b4f7-48ef-8943-2f64e199da92",
+      "name": "HTTP Post Reply",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [
+        1168,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "database",
+        "operation": "getAll"
+      },
+      "id": "b6d6b18e-1bd1-4d8d-9b81-a0d830b379fd",
+      "name": "Notion Update",
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2,
+      "position": [
+        1360,
+        96
+      ],
+      "credentials": {
+        "notionApi": {
+          "id": "27I8oJZkjrOmJf6F",
+          "name": "Notion account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "channel": "#moderation",
+        "text": "Reply posted for {{$json[\"object_id\"]}}",
+        "otherOptions": {},
+        "attachments": []
+      },
+      "id": "f679a418-9998-4730-84cc-e06935b39943",
+      "name": "Slack Confirm",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 1,
+      "position": [
+        1568,
+        96
+      ],
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "hihx7SoqeuxSIdfo",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        -272,
+        112
+      ],
+      "id": "150ea313-59f7-4777-9d56-a8ad4abb3bdc",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -384,
+        288
+      ],
+      "id": "2f419795-674f-4a4a-8092-c2ca2b1d0b92",
+      "name": "OpenAI Chat Model"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Cron": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request Comments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request Comments": {
+      "main": [
+        [
+          {
+            "node": "Function Extract",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Escalate": {
+      "main": [
+        [
+          {
+            "node": "Slack Escalate",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Notion Write",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notion Poll Approvals": {
+      "main": [
+        [
+          {
+            "node": "If Approved",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Approved": {
+      "main": [
+        [
+          {
+            "node": "HTTP Post Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Post Reply": {
+      "main": [
+        [
+          {
+            "node": "Notion Update",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notion Update": {
+      "main": [
+        [
+          {
+            "node": "Slack Confirm",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notion Write": {
+      "main": [
+        [
+          {
+            "node": "Notion Poll Approvals",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Function Extract": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "If Escalate",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "If Spam",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "1ce0dfdf-cb55-4764-866c-9596734375f5",
+  "meta": {
+    "instanceId": "ad844684cdc2200b63562c0ef41f6d61ef718721145a8d666b316194de93c58f"
+  },
+  "id": "PGgzYK4RTmHJIIfU",
+  "tags": []
+}

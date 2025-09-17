@@ -1,0 +1,172 @@
+{
+  "name": "Ingest Metrics",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "3b4af3f3-ab4d-46b8-bc2a-dfd03e0113aa",
+      "name": "Cron",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [-304, 208]
+    },
+    {
+      "parameters": {
+        "url": "https://mockapi.io/projects/ads-metrics",
+        "options": {}
+      },
+      "id": "fa1b535e-e6b0-4601-8c6e-92e692e9cbca",
+      "name": "HTTP Request Mock",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [96, 96]
+    },
+    {
+      "parameters": {
+        "url": "https://onebytecode.io/projects/google-ads",
+        "options": {}
+      },
+      "id": "7029a268-9d48-4898-973f-4774457d0589",
+      "name": "HTTP Request Real",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [96, 304]
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "mergeByFields": {
+          "values": [{}]
+        },
+        "options": {}
+      },
+      "id": "6485c6d4-7c37-4cad-a7c0-accd1a73be30",
+      "name": "Merge Results",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2,
+      "position": [304, 208]
+    },
+    {
+      "parameters": {
+        "functionCode": "return items.map(item => {\n  const d = item.json;\n  return {\n    json: {\n      date: d.date || new Date().toISOString().split('T')[0],\n      platform: d.platform || 'mock',\n      account_id: d.account_id || 'acc1',\n      campaign_id: d.campaign_id || 'camp1',\n      campaign_name: d.campaign_name || 'Campaign X',\n      spend: d.spend || 0,\n      impressions: d.impressions || 0,\n      clicks: d.clicks || 0,\n      conversions: d.conversions || 0,\n      cpl: d.clicks ? d.spend/d.clicks : null,\n      roas: d.conversions ? (d.revenue||0)/d.spend : null\n    }\n  };\n});"
+      },
+      "id": "b4ad1cb6-f51d-4a73-8d5c-821a44b46125",
+      "name": "Function Normalize",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [496, 208]
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "databaseId": "YOUR_NOTION_DB_ID",
+        "options": {}
+      },
+      "id": "5456a639-dfe2-4f6b-b7fe-58283c129507",
+      "name": "Notion",
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2,
+      "position": [704, 96],
+      "credentials": {
+        "notionApi": {
+          "id": "27I8oJZkjrOmJf6F",
+          "name": "Notion account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "tableId": "campaign_metrics"
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [704, 288],
+      "id": "ea428e91-6513-461d-ba64-0ce40ff5294e",
+      "name": "Insert",
+      "credentials": {
+        "supabaseApi": {
+          "id": "xDQEMmNQjoL2zOJA",
+          "name": "Supabase account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Cron": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request Mock",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "HTTP Request Real",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request Mock": {
+      "main": [
+        [
+          {
+            "node": "Merge Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request Real": {
+      "main": [
+        [
+          {
+            "node": "Merge Results",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge Results": {
+      "main": [
+        [
+          {
+            "node": "Function Normalize",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Function Normalize": {
+      "main": [
+        [
+          {
+            "node": "Notion",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Insert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "f0d75103-27bd-49f5-9b06-2e54976e165e",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ad844684cdc2200b63562c0ef41f6d61ef718721145a8d666b316194de93c58f"
+  },
+  "id": "wV4CS298JOZbosrb",
+  "tags": []
+}

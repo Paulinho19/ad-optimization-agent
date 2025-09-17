@@ -1,0 +1,255 @@
+{
+  "name": "Creative Generator",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "creative-gen",
+        "options": {}
+      },
+      "id": "9e58b4a8-1ae2-44f5-a8c8-436b663f7944",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -208,
+        112
+      ],
+      "webhookId": "bf1722cd-3d36-4605-9317-8720cc0a6b41"
+    },
+    {
+      "parameters": {
+        "resource": "user",
+        "operation": "getAll"
+      },
+      "id": "7150fd97-16d0-4dbe-af05-7f8f798f87d1",
+      "name": "Notion Brief",
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "credentials": {
+        "notionApi": {
+          "id": "27I8oJZkjrOmJf6F",
+          "name": "Notion account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "database",
+        "operation": "getAll"
+      },
+      "id": "770be0cd-7880-4440-bbde-4d534ac6df7d",
+      "name": "Notion History",
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2,
+      "position": [
+        0,
+        208
+      ],
+      "credentials": {
+        "notionApi": {
+          "id": "27I8oJZkjrOmJf6F",
+          "name": "Notion account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "functionCode": "return [{json:{prompt:`You are an ad copy generator. Create 3-5 new ad variants (headline + primary text) based on the brief: ${items[0].json.title}. Avoid repeating old variants.`}}];"
+      },
+      "id": "ccba4830-3c58-4de6-94c2-051c22f2a8d1",
+      "name": "Function Prepare Prompt",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        208,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Very basic novelty filter (mock)\nreturn items.map((item,i)=>{\n  return {json:{variant:item.json.choices?.[0]?.text||`Variant ${i+1}`,rationale:\"Based on CTR performance, trying new angle\",similarity:Math.random()}};\n});"
+      },
+      "id": "8169b4a4-63af-4c22-b7a1-aa567d200fe2",
+      "name": "Function Similarity Filter",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        656,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "database",
+        "operation": "getAll"
+      },
+      "id": "88c28bf5-bb60-484c-8702-713abdf73d55",
+      "name": "Notion Staged",
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2,
+      "position": [
+        832,
+        112
+      ],
+      "credentials": {
+        "notionApi": {
+          "id": "27I8oJZkjrOmJf6F",
+          "name": "Notion account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        352,
+        96
+      ],
+      "id": "c49c2669-e8c5-4e5c-ae38-e5d72a19f536",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        256,
+        288
+      ],
+      "id": "92b5b62a-07f6-4f43-9ca2-eea3b3b07b04",
+      "name": "OpenAI Chat Model"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        416,
+        288
+      ],
+      "id": "97697f06-5168-49a5-9904-6cb6b2b70c92",
+      "name": "Simple Memory"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Notion Brief",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Notion History",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notion Brief": {
+      "main": [
+        [
+          {
+            "node": "Function Prepare Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notion History": {
+      "main": [
+        [
+          {
+            "node": "Function Prepare Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Function Similarity Filter": {
+      "main": [
+        [
+          {
+            "node": "Notion Staged",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Function Prepare Prompt": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Function Similarity Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "c397fd84-2dda-4419-8c9d-d68d58578851",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ad844684cdc2200b63562c0ef41f6d61ef718721145a8d666b316194de93c58f"
+  },
+  "id": "RxCej4PZrn2V7VMt",
+  "tags": []
+}
