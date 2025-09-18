@@ -267,7 +267,3 @@ For questions or issues:
 - Review the workflow configurations
 - Check the troubleshooting section in each part's documentation
 
-## 🏷️ Version
-
-Current version: 1.0.0
-Last updated: December 2024
