@@ -201,11 +201,11 @@ META_ACCESS_TOKEN=your-meta-token
 - [System Architecture](docs/ARCHITECTURE.md)
 
 ## 🎥 Demo Videos
-
-- [Part 1 Walkthrough](https://loom.com/part1-demo)
-- [Part 2 Walkthrough](https://loom.com/part2-demo)
-- [Part 3 Walkthrough](https://loom.com/part3-demo)
-- [Part 4 Walkthrough](https://loom.com/part4-demo)
+- [Introduction](https://www.loom.com/share/d8903710f6794bcc97e07dcad199a50e?sid=e244273c-4f78-46c1-a07b-b9bbaf7060ce)
+- [Part 1 Walkthrough]([https://loom.com/part1-demo](https://www.loom.com/share/a8f2347e1f0245f8b73f5076292b1599?sid=27d12f1d-fccd-443d-80d2-c2e8c84bec86))
+- [Part 2 Walkthrough](https://www.loom.com/share/f9fed91efe10438a8c8547839fff91fa?sid=b09294a6-72a4-4045-bb0e-7828e21ac752)
+- [Part 3 Walkthrough]([https://loom.com/part3-demo](https://www.loom.com/share/640083641d0f4048b5ea4a408dadfce6?sid=8f31f6ae-0553-4999-bcc2-90f1502f6e9e))
+- [Part 4 Walkthrough](https://www.loom.com/share/f7c380ab82bb42fcae9298b1dc01ac65?sid=c5a34a7b-3280-4959-81bf-7a1903154833)
 
 ## 🧪 Testing
 
